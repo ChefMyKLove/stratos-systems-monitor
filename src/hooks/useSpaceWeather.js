@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const API = 'http://localhost:3001/api/systems';
+const API = import.meta.env.DEV
+  ? 'http://localhost:3001/api/systems'
+  : 'https://stratos-systems-monitor-production.up.railway.app/api/systems';
 
 export function useSpaceWeather() {
   const [data, setData] = useState(null);
