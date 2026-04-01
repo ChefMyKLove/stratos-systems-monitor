@@ -5,7 +5,16 @@ import systemsRouter from './routes/systems.js';
 
 const app = express();
 
-app.use(cors({ origin: config.corsOrigin }));
+app.use(cors({
+  origin: (origin, cb) => {
+    // allow any localhost origin in dev, plus the configured production origin
+    if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin) || origin === config.corsOrigin) {
+      cb(null, true);
+    } else {
+      cb(new Error('Not allowed by CORS'));
+    }
+  }
+}));
 app.use(express.json());
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
