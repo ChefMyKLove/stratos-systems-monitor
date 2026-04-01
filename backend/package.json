@@ -1,0 +1,19 @@
+{
+  "name": "stratos-backend",
+  "version": "1.0.0",
+  "description": "Stratos systems data backend — aggregates earthquakes, space weather, and global weather",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "node-cron": "^3.0.3",
+    "node-fetch": "^3.3.2",
+    "pg": "^8.11.5"
+  }
+}
