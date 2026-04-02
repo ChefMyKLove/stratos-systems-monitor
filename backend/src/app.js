@@ -7,8 +7,12 @@ const app = express();
 
 app.use(cors({
   origin: (origin, cb) => {
-    // allow any localhost origin in dev, plus the configured production origin
-    if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin) || origin === config.corsOrigin) {
+    if (
+      !origin ||
+      /^http:\/\/localhost(:\d+)?$/.test(origin) ||
+      /^https:\/\/chefmyklove\.github\.io$/.test(origin) ||
+      origin === config.corsOrigin
+    ) {
       cb(null, true);
     } else {
       cb(new Error('Not allowed by CORS'));
