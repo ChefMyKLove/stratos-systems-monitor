@@ -12,6 +12,9 @@ export const config = {
     },
     spaceWeather: {
       kpUrl: 'https://services.swpc.noaa.gov/json/planetary_k_index_1m.json',
+      kp3dayUrl: 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json',
+      // GFZ (kp.gfz.de) — authoritative Kp source, used for 30-day backfill
+      kp30dayBaseUrl: 'https://kp.gfz.de/app/json/',
       alertsUrl: 'https://services.swpc.noaa.gov/products/alerts.json',
       solarWindUrl: 'https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json',
       intervalMinutes: 10,

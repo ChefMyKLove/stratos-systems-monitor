@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { fetchEarthquakes } from './fetchers/earthquakes.js';
-import { fetchSpaceWeather } from './fetchers/spaceWeather.js';
+import { fetchSpaceWeather, backfillKp30day } from './fetchers/spaceWeather.js';
 
 export function startScheduler() {
   // Earthquakes every 2 minutes
@@ -14,6 +14,10 @@ export function startScheduler() {
     console.log('[scheduler] running space weather fetch');
     await fetchSpaceWeather();
   });
+
+  // Populate DB immediately on startup (don't wait for first cron tick)
+  fetchSpaceWeather();
+  backfillKp30day();
 
   console.log('[scheduler] all jobs registered');
 }

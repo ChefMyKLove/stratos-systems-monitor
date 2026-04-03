@@ -10,7 +10,7 @@ function cleanJson(obj) {
 }
 
 async function fetchJson(url) {
-  const res = await fetch(url, { timeout: 10000 });
+  const res = await fetch(url, { timeout: 15000 });
   if (!res.ok) throw new Error(`SWPC ${url} responded ${res.status}`);
   return res.json();
 }
@@ -23,20 +23,31 @@ function kpSeverity(kp) {
   return 'minor';
 }
 
-async function ingestKp() {
-  const data = await fetchJson(cfg.kpUrl);
-  await saveRawPayload(PROVIDER, cfg.kpUrl, data);
+// NOAA timestamps are UTC but often omit the 'Z' suffix.
+// Without 'Z', new Date() treats the string as LOCAL time — wrong on any non-UTC server.
+// This helper forces UTC parsing regardless of whether the source includes 'Z'.
+function toUtcIso(ts) {
+  if (!ts) return null;
+  const hasZone = ts.endsWith('Z') || ts.includes('+') || /[+-]\d{2}:\d{2}$/.test(ts);
+  return new Date(hasZone ? ts : ts + 'Z').toISOString();
+}
 
-  // data is an array of [time_tag, kp, status] entries
-  for (const entry of data.slice(-10)) {
-    const [time_tag, kp] = Array.isArray(entry) ? entry : [entry.time_tag, entry.kp_index];
-    if (kp == null) continue;
+// Shared upsert logic — handles NOAA array/object format and GFZ object format
+async function upsertKpEntries(entries) {
+  for (const entry of entries) {
+    const [time_tag, kp] = Array.isArray(entry) ? entry : [entry.time_tag, entry.Kp ?? entry.kp_index];
+    if (!time_tag || time_tag === 'time_tag') continue; // skip header rows
+    if (kp == null || kp === '' || isNaN(parseFloat(kp))) continue;
     const kpVal = parseFloat(kp);
+    const isoTs = toUtcIso(time_tag);
+    if (!isoTs) continue;
     await upsertEvent({
       provider: PROVIDER,
+      // Keep original time_tag in the ID (no Z normalization) so ON CONFLICT
+      // correctly upserts old incorrectly-stored entries with the fixed timestamp.
       provider_event_id: `kp_${time_tag}`,
       event_type: 'kp_index',
-      timestamp: new Date(time_tag).toISOString(),
+      timestamp: isoTs,
       latitude: null,
       longitude: null,
       depth: null,
@@ -48,6 +59,20 @@ async function ingestKp() {
       raw_json: cleanJson({ time_tag, kp: kpVal }),
     });
   }
+}
+
+// NOAA 1-min feed — rolling ~24h window, high resolution
+async function ingestKp() {
+  const data = await fetchJson(cfg.kpUrl);
+  await saveRawPayload(PROVIDER, cfg.kpUrl, data);
+  await upsertKpEntries(Array.isArray(data) ? data : []);
+}
+
+// NOAA 3-day feed — 3h resolution, covers 72h
+async function ingestKp3day() {
+  const data = await fetchJson(cfg.kp3dayUrl);
+  await saveRawPayload(PROVIDER, cfg.kp3dayUrl, data);
+  await upsertKpEntries(Array.isArray(data) ? data : []);
 }
 
 async function ingestAlerts() {
@@ -97,13 +122,47 @@ async function ingestSolarWind() {
   }
 }
 
+// Regular cycle every 10 min
 export async function fetchSpaceWeather() {
   try {
-    await Promise.all([ingestKp(), ingestAlerts(), ingestSolarWind()]);
+    await Promise.all([ingestKp(), ingestKp3day(), ingestAlerts(), ingestSolarWind()]);
     await updateSourceStatus(PROVIDER, 'ok');
-    console.log('[space-weather] ingested kp, alerts, solar wind');
+    console.log('[space-weather] ingested kp (1m + 3day), alerts, solar wind');
   } catch (err) {
     console.error('[space-weather] fetch error:', err.message);
     await updateSourceStatus(PROVIDER, 'error').catch(() => {});
+  }
+}
+
+// One-time 30-day backfill from GFZ (kp.gfz.de)
+// API: GET /app/json/?start=YYYY-MM-DDThh:mm:ssZ&end=...&index=Kp
+// Response: { datetime: [...ISO strings...], Kp: [...floats...], status: [...] }
+export async function backfillKp30day() {
+  try {
+    const end   = new Date();
+    const start = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const fmt   = (d) => d.toISOString().slice(0, 19) + 'Z';
+
+    const url = `${cfg.kp30dayBaseUrl}?start=${fmt(start)}&end=${fmt(end)}&index=Kp`;
+    console.log(`[space-weather] GFZ backfill: ${url}`);
+
+    const data = await fetchJson(url);
+
+    const datetimes = data.datetime ?? [];
+    const kpValues  = data.Kp ?? [];
+
+    if (!datetimes.length) {
+      console.error(`[space-weather] GFZ backfill: unexpected response. Keys: ${Object.keys(data).join(', ')}`);
+      return;
+    }
+
+    const entries = datetimes.map((time_tag, i) => [time_tag, kpValues[i]]);
+    await upsertKpEntries(entries);
+
+    const oldest = datetimes[0];
+    const newest = datetimes[datetimes.length - 1];
+    console.log(`[space-weather] GFZ backfill complete — ${entries.length} readings (${oldest} → ${newest})`);
+  } catch (err) {
+    console.error('[space-weather] 30-day backfill error:', err.message);
   }
 }

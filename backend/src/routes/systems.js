@@ -53,10 +53,28 @@ router.get('/earthquakes', async (req, res) => {
 // Space weather
 router.get('/space-weather', async (req, res) => {
   try {
-    const { rows: kp } = await pool.query(
+    const kpHours = Math.min(Math.max(parseInt(req.query.kp_hours) || 24, 1), 8760);
+
+    // Two-part query so GFZ historical data isn't buried under 1-min accumulation:
+    // Part 1 — recent 24h at full 1-min resolution (up to ~1440 rows, no cap)
+    const { rows: kpRecent } = await pool.query(
       `SELECT * FROM events WHERE provider = 'noaa_swpc' AND event_type = 'kp_index'
-       ORDER BY timestamp DESC LIMIT 24`
+         AND timestamp >= NOW() - INTERVAL '24 hours'
+       ORDER BY timestamp DESC`,
     );
+    // Part 2 — historical data older than 24h, up to the requested range (3-hourly GFZ/NOAA)
+    let kpHistory = [];
+    if (kpHours > 24) {
+      const { rows } = await pool.query(
+        `SELECT * FROM events WHERE provider = 'noaa_swpc' AND event_type = 'kp_index'
+           AND timestamp < NOW() - INTERVAL '24 hours'
+           AND timestamp >= NOW() - ($1 * INTERVAL '1 hour')
+         ORDER BY timestamp DESC LIMIT 500`,
+        [kpHours]
+      );
+      kpHistory = rows;
+    }
+    const kp = [...kpRecent, ...kpHistory];
     const { rows: solarWind } = await pool.query(
       `SELECT * FROM events WHERE provider = 'noaa_swpc' AND event_type = 'solar_wind'
        ORDER BY timestamp DESC LIMIT 10`

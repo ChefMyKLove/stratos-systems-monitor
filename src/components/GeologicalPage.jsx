@@ -30,7 +30,7 @@ function timeAgo(ts) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-export default function GeologicalPage({ onNavigate }) {
+export default function GeologicalPage({ onNavigate, weatherCity }) {
   const { data, status, minMag, setMinMag } = useEarthquakes();
   const features = data?.features ?? [];
 
@@ -47,6 +47,11 @@ export default function GeologicalPage({ onNavigate }) {
             <button className="module-btn active">🌍 Geological</button>
             <button className="module-btn" onClick={() => onNavigate('aurora')}>✨ Aurora</button>
           </nav>
+          {weatherCity && (
+            <div style={{ fontSize: 11, color: 'var(--accent)', fontFamily: "'DM Mono', monospace", letterSpacing: '0.08em' }}>
+              📍 {weatherCity}
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {['2.5','4.0','6.0'].map(v => (
               <button key={v}

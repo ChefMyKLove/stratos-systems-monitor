@@ -73,9 +73,16 @@ export default function App() {
   const hourly = data ? data.fore.list.slice(0, 16) : [];
   const currentRef = data ? { name: data.cur.name, country: data.cur.sys.country } : null;
 
-  if (view === 'splash') return <SplashPage onNavigate={setView} />;
-  if (view === 'geological') return <GeologicalPage onNavigate={setView} />;
-  if (view === 'aurora') return <AuroraPage onNavigate={setView} />;
+  if (view === 'splash') return <SplashPage
+    onNavigate={setView}
+    onSearch={handleSearch}
+    onLocate={handleLocate}
+    onRandom={handleRandom}
+    weatherStatus={status}
+    weatherCity={data?.cur ? `${data.cur.name}, ${data.cur.sys.country}` : null}
+  />;
+  if (view === 'geological') return <GeologicalPage onNavigate={setView} weatherCity={data?.cur ? `${data.cur.name}, ${data.cur.sys.country}` : null} />;
+  if (view === 'aurora') return <AuroraPage onNavigate={setView} weatherCity={data?.cur ? `${data.cur.name}, ${data.cur.sys.country}` : null} weatherLat={data?.cur?.coord?.lat ?? null} />;
 
   return (
     <>
