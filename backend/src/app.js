@@ -11,6 +11,7 @@ app.use(cors({
       !origin ||
       /^http:\/\/localhost(:\d+)?$/.test(origin) ||
       /^https:\/\/chefmyklove\.github\.io$/.test(origin) ||
+      /^https?:\/\/([a-z0-9-]+\.)*chefmyklove\.com$/.test(origin) ||
       origin === config.corsOrigin
     ) {
       cb(null, true);
