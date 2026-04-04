@@ -428,9 +428,9 @@ function AuroraVisibility({ lat, kp, city }) {
         Aurora Visibility · {city ? city.split(',')[0] : 'Your Location'}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 36, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 4vw, 36px)', flexWrap: 'wrap' }}>
         {/* Status + progress */}
-        <div style={{ flex: 1, minWidth: 220 }}>
+        <div style={{ flex: 1, minWidth: 'min(220px, 100%)' }}>
           <div style={{
             fontSize: 52, fontFamily: "'Syne', sans-serif", fontWeight: 700,
             color: statusColor, letterSpacing: '-0.02em', lineHeight: 1,
@@ -500,7 +500,7 @@ function AuroraVisibility({ lat, kp, city }) {
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 22, flexShrink: 0, minWidth: 120 }}>
+        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 16, flexShrink: 0, minWidth: 0 }}>
           {[
             { label: 'Current Kp',   value: kp.toFixed(1), color: KP_COLOR(kp) },
             { label: 'Min Required', value: requiredKp >= 10 ? '> 9' : `${requiredKp}.0`, color: 'var(--text)' },
@@ -566,7 +566,7 @@ export default function AuroraPage({ onNavigate, weatherCity, weatherLat }) {
           )}
 
           {status === 'success' && data && (
-            <div className="grid" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+            <div className="grid">
 
               {/* Kp gauge */}
               <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
