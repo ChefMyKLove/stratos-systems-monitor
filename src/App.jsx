@@ -68,7 +68,10 @@ export default function App() {
     loadByCity(city);
   }
 
-  const condition = data?.cur?.weather?.[0]?.main || '';
+  const condition   = data?.cur?.weather?.[0]?.main        || '';
+  const description = data?.cur?.weather?.[0]?.description || '';
+  const sunrise     = data?.cur?.sys?.sunrise ?? null;
+  const sunset      = data?.cur?.sys?.sunset  ?? null;
   const days = data ? groupForecastByDay(data.fore.list) : {};
   const hourly = data ? data.fore.list.slice(0, 16) : [];
   const currentRef = data ? { name: data.cur.name, country: data.cur.sys.country } : null;
@@ -86,7 +89,7 @@ export default function App() {
 
   return (
     <>
-      <StarCanvas condition={condition} />
+      <StarCanvas condition={condition} description={description} sunrise={sunrise} sunset={sunset} />
       <div id="app">
         <header className="glass-panel">
           <div className="logo" onClick={() => setView('splash')} style={{ cursor: 'pointer' }} title="Back to STRATOS">STRATOS<span>WEATHER</span></div>
