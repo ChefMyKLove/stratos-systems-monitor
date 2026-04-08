@@ -1,6 +1,6 @@
 # STRATOS — Systems Monitor
 
-A dynamic, visually striking real-time systems monitoring app built with **React**, a **Node.js/Express backend**, and **PostgreSQL**. Tracks live seismic activity, space weather (Kp index, solar wind, NOAA alerts), and weather forecasts — all with an animated starfield UI.
+A dynamic, visually striking real-time systems monitoring app built with **React**, a **Node.js/Express backend**, and **PostgreSQL**. Tracks live seismic activity, space weather (Kp index, solar wind, NOAA alerts), and weather forecasts — with a fully animated canvas background that transitions through night, dawn, day, and dusk based on real sunrise/sunset data, and renders live weather particle effects including rain, snow, fog, and lightning.
 
 🌐 **Live Demo:** [chefmyklove.github.io/stratos-weather-app](https://chefmyklove.github.io/stratos-weather-app/)
 
@@ -13,7 +13,8 @@ A dynamic, visually striking real-time systems monitoring app built with **React
 - ☁️ **Weather** — City search, geolocation, 5-day forecast, AQI, hourly carousel
 - 💾 **Save up to 5 locations** with persistent localStorage
 - 🌡️ **°C / °F toggle**
-- ✨ **Visual effects** — Animated parallax starfield, glassmorphism UI, rainbow shooting stars
+- 🌅 **Time-of-day sky** — Live background transitions through night, dawn, day, and dusk phases driven by real sunrise/sunset times, with horizon glow and dynamically adapting glassmorphism opacity
+- ⛈️ **Weather-reactive canvas** — Particle systems for rain (drizzle / normal / heavy), snow, blizzard, flurries, sleet, thunderstorm lightning, fog, haze, and overcast clouds rendered on an animated parallax starfield with rainbow shooting stars
 
 ---
 
