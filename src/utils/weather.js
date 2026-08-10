@@ -1,4 +1,8 @@
-export const API_KEY = '0e43eedf4557a8a6f0cd4a4a91d43751';
+import { BACKEND_URL, TOKEN_KEY } from './auth';
+
+function authHeaders() {
+  return { Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` };
+}
 
 export const RANDOM_CITIES = [
   'Tokyo','London','New York','Sydney','Cairo','Rio de Janeiro','Mumbai','Moscow',
@@ -59,27 +63,80 @@ export function getBgCondition(condition) {
 }
 
 export async function fetchWeatherByCity(city) {
-  const [cur, fore] = await Promise.all([
-    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`).then(r => r.json()),
-    fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`).then(r => r.json()),
-  ]);
-  if (cur.cod !== 200) throw new Error(`City not found: "${city}"`);
-  const aqi = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${cur.coord.lat}&lon=${cur.coord.lon}&appid=${API_KEY}`).then(r => r.json()).catch(() => null);
-  return { cur, fore, aqi };
+  const res = await fetch(`${BACKEND_URL}/api/weather/current?city=${encodeURIComponent(city)}`, { headers: authHeaders() });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `City not found: "${city}"`);
+  }
+  return res.json();
 }
 
 export async function fetchWeatherByCoords(lat, lon) {
-  const [cur, fore] = await Promise.all([
-    fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`).then(r => r.json()),
-    fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`).then(r => r.json()),
-  ]);
-  const aqi = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`).then(r => r.json()).catch(() => null);
-  return { cur, fore, aqi };
+  const res = await fetch(`${BACKEND_URL}/api/weather/current?lat=${lat}&lon=${lon}`, { headers: authHeaders() });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Could not fetch weather for your location.');
+  }
+  return res.json();
 }
 
 export async function fetchGeoSuggestions(query) {
-  const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=6&appid=${API_KEY}`);
+  const res = await fetch(`${BACKEND_URL}/api/weather/geocode?q=${encodeURIComponent(query)}`, { headers: authHeaders() });
+  if (!res.ok) return [];
   return res.json();
+}
+
+// Full available archive for a location — fetched once, then browsed client-side (any day, any year).
+export async function fetchFullWeatherHistory(lat, lon) {
+  const res = await fetch(`${BACKEND_URL}/api/weather/history?lat=${lat}&lon=${lon}`, { headers: authHeaders() });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Could not fetch weather history.');
+  }
+  return res.json();
+}
+
+// Pulls every occurrence of a given month/day (1-indexed month) out of a full-history payload,
+// newest year first.
+export function extractDayAcrossYears(fullData, month, day) {
+  const { time, temperature_2m_max, temperature_2m_min, precipitation_sum, weathercode } = fullData.daily;
+  const rows = [];
+  for (let i = 0; i < time.length; i++) {
+    const d = new Date(time[i]);
+    if (d.getMonth() + 1 === month && d.getDate() === day) {
+      rows.push({
+        year: d.getFullYear(),
+        date: time[i],
+        tempMax: temperature_2m_max[i],
+        tempMin: temperature_2m_min[i],
+        precip: precipitation_sum[i],
+        weathercode: weathercode[i],
+      });
+    }
+  }
+  return rows.sort((a, b) => b.year - a.year);
+}
+
+export function summarizeDayHistory(rows) {
+  if (rows.length === 0) return null;
+  const recordHigh = rows.reduce((best, r) => (r.tempMax > best.tempMax ? r : best), rows[0]);
+  const recordLow = rows.reduce((best, r) => (r.tempMin < best.tempMin ? r : best), rows[0]);
+  const avgHigh = rows.reduce((sum, r) => sum + r.tempMax, 0) / rows.length;
+  const avgLow = rows.reduce((sum, r) => sum + r.tempMin, 0) / rows.length;
+  return { recordHigh, recordLow, avgHigh, avgLow, years: rows.length };
+}
+
+// Maps Open-Meteo WMO weather codes to the same emoji vocabulary as current conditions.
+export function wmoCodeEmoji(code) {
+  if ([95, 96, 99].includes(code)) return '⛈️';
+  if ([51, 53, 55, 56, 57].includes(code)) return '🌦️';
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️';
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return '❄️';
+  if ([45, 48].includes(code)) return '🌫️';
+  if ([1, 2].includes(code)) return '⛅';
+  if (code === 3) return '☁️';
+  if (code === 0) return '☀️';
+  return '🌡️';
 }
 
 export function groupForecastByDay(foreList) {

@@ -2,6 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import { config } from './config.js';
 import systemsRouter from './routes/systems.js';
+import weatherRouter from './routes/weather.js';
+import authRouter from './routes/auth.js';
+import { requireAuth } from './middleware/auth.js';
 
 const app = express();
 
@@ -23,6 +26,8 @@ app.use(cors({
 app.use(express.json());
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
-app.use('/api/systems', systemsRouter);
+app.use('/auth', authRouter);
+app.use('/api/systems', requireAuth, systemsRouter);
+app.use('/api/weather', requireAuth, weatherRouter);
 
 export default app;

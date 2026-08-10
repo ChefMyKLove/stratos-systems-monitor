@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { BACKEND_URL, TOKEN_KEY } from '../utils/auth';
 
-const API = import.meta.env.DEV
-  ? 'http://localhost:3001/api/systems'
-  : 'https://stratos-systems-monitor-production.up.railway.app/api/systems';
+const API = `${BACKEND_URL}/api/systems`;
 
 export function useEarthquakes() {
   const [data, setData] = useState(null);
@@ -12,17 +11,19 @@ export function useEarthquakes() {
   const load = useCallback(async (mag = minMag) => {
     setStatus('loading');
     try {
-      const res = await fetch(`${API}/earthquakes?min_magnitude=${mag}&limit=100`);
+      const res = await fetch(`${API}/earthquakes?min_magnitude=${mag}&limit=100`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` },
+      });
       if (!res.ok) throw new Error(`Backend ${res.status}`);
       const json = await res.json();
       setData(json);
       setStatus('success');
-    } catch (err) {
+    } catch {
       setStatus('error');
     }
   }, [minMag]);
 
-  useEffect(() => { load(minMag); }, [minMag]);
+  useEffect(() => { load(minMag); }, [minMag, load]);
 
   // Auto-refresh every 2 minutes
   useEffect(() => {

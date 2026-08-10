@@ -5,6 +5,19 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL || 'postgresql://localhost:5432/stratos',
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
 
+  openWeatherMapApiKey: process.env.OPENWEATHERMAP_API_KEY,
+
+  jwtSecret: process.env.JWT_SECRET,
+
+  patreon: {
+    clientId: process.env.PATREON_CLIENT_ID,
+    clientSecret: process.env.PATREON_CLIENT_SECRET,
+    redirectUri: process.env.PATREON_REDIRECT_URI,
+    // Any tier in this list grants access. Comma-separated in env, e.g. "27277603,27277625".
+    tierIds: (process.env.PATREON_TIER_IDS || '').split(',').map(s => s.trim()).filter(Boolean),
+    stratosUrl: process.env.STRATOS_URL || 'http://localhost:5173',
+  },
+
   providers: {
     earthquakes: {
       feedUrl: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson',

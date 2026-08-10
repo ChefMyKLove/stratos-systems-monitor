@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { windDir, fmtTime, aqiLabel } from '../utils/weather';
 
 export function AtmosphereCard({ cur }) {
@@ -49,7 +50,13 @@ export function WindCard({ cur }) {
 }
 
 export function SunCard({ cur }) {
-  const now = Date.now() / 1000;
+  const [now, setNow] = useState(() => Date.now() / 1000);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now() / 1000), 60000);
+    return () => clearInterval(id);
+  }, []);
+
   const sunProgress = Math.max(0, Math.min(1, (now - cur.sys.sunrise) / (cur.sys.sunset - cur.sys.sunrise)));
   const t = Math.max(0.02, Math.min(0.98, sunProgress));
   const sx = (10 + t * 180).toFixed(1);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import StarCanvas from './StarCanvas';
 import GlassTitle from './GlassTitle';
 import { useSpaceWeather } from '../hooks/useSpaceWeather';
@@ -151,9 +151,15 @@ const KP_RANGES = [
 
 function KpBar({ entries }) {
   const [range, setRange] = useState(24);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
 
   // Client-side filter — instant, no re-fetch
-  const cutoff = new Date(Date.now() - range * 60 * 60 * 1000);
+  const cutoff = new Date(now - range * 60 * 60 * 1000);
   const filtered = entries.filter(e => e.timestamp && new Date(e.timestamp) >= cutoff);
   const bars = [...filtered].reverse(); // oldest → newest left to right
 

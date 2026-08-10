@@ -2,7 +2,7 @@
 
 A dynamic, visually striking real-time systems monitoring app built with **React**, a **Node.js/Express backend**, and **PostgreSQL**. Tracks live seismic activity, space weather (Kp index, solar wind, NOAA alerts), and weather forecasts — with a fully animated canvas background that transitions through night, dawn, day, and dusk based on real sunrise/sunset data, and renders live weather particle effects including rain, snow, fog, and lightning.
 
-🌐 **Live Demo:** [chefmyklove.github.io/stratos-weather-app](https://chefmyklove.github.io/stratos-weather-app/)
+🌐 **Live Demo:** [stratos.chefmyklove.com](https://stratos.chefmyklove.com)
 
 ---
 

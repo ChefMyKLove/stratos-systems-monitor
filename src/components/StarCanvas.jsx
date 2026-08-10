@@ -96,9 +96,10 @@ export default function StarCanvas({ condition = '', description = '', sunrise, 
   const skyStateRef      = useRef({ skyT: 0, isDusk: false, phase: 'night' });
   const weatherRef       = useRef({ type: 'clear' });
   const particlesRef     = useRef({});
-  const lightningRef     = useRef({ active: false, alpha: 0, next: Date.now() + 6000, bolts: [] });
+  const lightningRef     = useRef({ active: false, alpha: 0, next: 0, bolts: [] });
 
   useEffect(() => { window._shootingStars = shootingStarsRef.current; }, []);
+  useEffect(() => { lightningRef.current.next = Date.now() + 6000; }, []);
 
   useEffect(() => {
     weatherRef.current.type = getWeatherType(condition, description);

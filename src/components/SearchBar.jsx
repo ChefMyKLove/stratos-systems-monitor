@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchGeoSuggestions, RANDOM_CITIES } from '../utils/weather';
 
-export default function SearchBar({ onSearch, onLocate, onRandom }) {
+export default function SearchBar({ onSearch, onLocate }) {
   const [query, setQuery] = useState('');
+  const [prevQuery, setPrevQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [highlighted, setHighlighted] = useState(-1);
   const [open, setOpen] = useState(false);
-  const debounceRef = useRef(null);
   const wrapRef = useRef(null);
 
   const fetchSuggestions = useCallback(async (q) => {
@@ -18,12 +18,18 @@ export default function SearchBar({ onSearch, onLocate, onRandom }) {
     } catch { setOpen(false); }
   }, []);
 
+  if (query !== prevQuery) {
+    setPrevQuery(query);
+    if (query.trim().length < 2) { setSuggestions([]); setOpen(false); }
+  }
+
   useEffect(() => {
-    clearTimeout(debounceRef.current);
-    if (query.trim().length < 2) { setSuggestions([]); setOpen(false); return; }
-    debounceRef.current = setTimeout(() => fetchSuggestions(query.trim()), 280);
-    return () => clearTimeout(debounceRef.current);
+    if (query.trim().length < 2) return;
+    const id = setTimeout(() => fetchSuggestions(query.trim()), 280);
+    return () => clearTimeout(id);
   }, [query, fetchSuggestions]);
+
+  function close() { setOpen(false); setSuggestions([]); setHighlighted(-1); }
 
   useEffect(() => {
     function handleClick(e) {
@@ -32,8 +38,6 @@ export default function SearchBar({ onSearch, onLocate, onRandom }) {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
-
-  function close() { setOpen(false); setSuggestions([]); setHighlighted(-1); }
 
   function select(r) {
     setQuery(r.name);
@@ -76,7 +80,7 @@ export default function SearchBar({ onSearch, onLocate, onRandom }) {
               ? <div className="ac-empty">No cities found</div>
               : suggestions.map((r, i) => (
                 <div
-                  key={`${r.name}-${r.lat}`}
+                  key={`${r.name}-${r.lat}-${r.lon}-${i}`}
                   className={`ac-item${i === highlighted ? ' highlighted' : ''}`}
                   onMouseDown={() => select(r)}
                 >

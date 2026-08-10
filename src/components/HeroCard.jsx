@@ -1,6 +1,6 @@
 import { convertTemp, tempSymbol, weatherEmoji } from '../utils/weather';
 
-export default function HeroCard({ cur, unit, onSave }) {
+export default function HeroCard({ cur, unit, onSave, onOpenHistory }) {
   const w = cur.weather[0];
   const emoji = weatherEmoji(w.main, w.description);
   const tMin = cur.main.temp_min, tMax = cur.main.temp_max;
@@ -10,7 +10,10 @@ export default function HeroCard({ cur, unit, onSave }) {
 
   return (
     <div className="card hero-card">
-      <button className="save-btn" onClick={onSave}>＋ Save Location</button>
+      <div className="hero-actions">
+        <button className="history-btn" onClick={onOpenHistory}>📅 On This Day</button>
+        <button className="save-btn" onClick={onSave}>＋ Save Location</button>
+      </div>
       <div className="card-label"><span className="dot" />&nbsp;Current Conditions</div>
       <div className="hero-location">{cur.name}</div>
       <div className="hero-country">

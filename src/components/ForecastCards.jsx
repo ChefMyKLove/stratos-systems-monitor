@@ -25,11 +25,15 @@ const VISIBLE = 8;
 
 export function HourlyCarousel({ hourly, unit }) {
   const [page, setPage] = useState(0);
+  const [prevHourly, setPrevHourly] = useState(hourly);
   const trackRef = useRef(null);
   const sym = tempSymbol(unit);
   const pages = Math.ceil(hourly.length / VISIBLE);
 
-  useEffect(() => { setPage(0); }, [hourly]);
+  if (hourly !== prevHourly) {
+    setPrevHourly(hourly);
+    setPage(0);
+  }
 
   useEffect(() => {
     const track = trackRef.current;

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import StarCanvas from './components/StarCanvas';
 import SplashPage from './components/SplashPage';
 import GeologicalPage from './components/GeologicalPage';
@@ -8,11 +8,15 @@ import HeroCard from './components/HeroCard';
 import { AtmosphereCard, WindCard, SunCard, AQICard } from './components/WeatherCards';
 import { ForecastCard, HourlyCarousel } from './components/ForecastCards';
 import SavedLocations from './components/SavedLocations';
+import HistoricalWeatherModal from './components/HistoricalWeatherModal';
+import LoginGate from './components/LoginGate';
 import { useWeather } from './hooks/useWeather';
 import { useSavedLocations } from './hooks/useSavedLocations';
+import { useAuth } from './hooks/useAuth';
 import { groupForecastByDay, RANDOM_CITIES } from './utils/weather';
 
 export default function App() {
+  const { isAuthenticated, authError, logout } = useAuth();
   const [view, setView] = useState('splash');
   const { status, error, data, loadByCity, loadByCoords, clearError } = useWeather();
   const { locations, save, remove } = useSavedLocations();
@@ -21,6 +25,7 @@ export default function App() {
     () => !!localStorage.getItem('stratos_banner_dismissed')
   );
   const [toast, setToast] = useState('');
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   function showToast(msg) {
     setToast(msg);
@@ -76,6 +81,8 @@ export default function App() {
   const hourly = data ? data.fore.list.slice(0, 16) : [];
   const currentRef = data ? { name: data.cur.name, country: data.cur.sys.country } : null;
 
+  if (!isAuthenticated) return <LoginGate error={authError} />;
+
   if (view === 'splash') return <SplashPage
     onNavigate={setView}
     onSearch={handleSearch}
@@ -101,6 +108,7 @@ export default function App() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button className={`unit-toggle${unit === 'C' ? ' active' : ''}`} onClick={() => setUnit('C')}>°C</button>
             <button className={`unit-toggle${unit === 'F' ? ' active' : ''}`} onClick={() => setUnit('F')}>°F</button>
+            <button className="unit-toggle" onClick={logout} title="Log out">⎋ Log Out</button>
             <div style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 6 }}>v3.0 · OpenWeatherMap</div>
           </div>
         </header>
@@ -139,7 +147,7 @@ export default function App() {
 
         {status === 'success' && data && (
           <div className="grid">
-            <HeroCard cur={data.cur} unit={unit} onSave={handleSave} />
+            <HeroCard cur={data.cur} unit={unit} onSave={handleSave} onOpenHistory={() => setHistoryOpen(true)} />
             <AtmosphereCard cur={data.cur} />
             <WindCard cur={data.cur} />
             <SunCard cur={data.cur} />
@@ -155,6 +163,15 @@ export default function App() {
             <HourlyCarousel hourly={hourly} unit={unit} />
           </div>
         )}
+
+        <HistoricalWeatherModal
+          isOpen={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          lat={data?.cur?.coord?.lat}
+          lon={data?.cur?.coord?.lon}
+          locationName={data ? `${data.cur.name}, ${data.cur.sys.country}` : null}
+          unit={unit}
+        />
       </div>
     </>
   );
