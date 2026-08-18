@@ -15,6 +15,8 @@ export const config = {
     redirectUri: process.env.PATREON_REDIRECT_URI,
     // Any tier in this list grants access. Comma-separated in env, e.g. "27277603,27277625".
     tierIds: (process.env.PATREON_TIER_IDS || '').split(',').map(s => s.trim()).filter(Boolean),
+    // Patreon user IDs that always get access, regardless of tier. Comma-separated in env.
+    adminIds: (process.env.PATREON_ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean),
     stratosUrl: process.env.STRATOS_URL || 'http://localhost:5173',
   },
 
