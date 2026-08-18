@@ -141,6 +141,14 @@ export async function saveRawPayload(provider, endpoint, payload) {
   );
 }
 
+export async function pruneRawPayloads(days = 3) {
+  const { rowCount } = await pool.query(
+    `DELETE FROM raw_payloads WHERE fetched_at < NOW() - ($1 || ' days')::interval`,
+    [days]
+  );
+  return rowCount;
+}
+
 export async function updateSourceStatus(name, status) {
   await pool.query(
     `INSERT INTO sources (name, status, last_fetched_at)
