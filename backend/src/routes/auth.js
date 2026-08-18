@@ -35,6 +35,9 @@ router.get('/patreon/callback', async (req, res) => {
     if (!identityRes.ok) throw new Error(`Patreon identity lookup failed: ${identityRes.status}`);
     const identity = await identityRes.json();
 
+    // TEMP: logging to find the admin's Patreon user ID for the allowlist. Remove after use.
+    console.log('[auth] patreon identity.data.id =', identity.data?.id, 'full_name =', identity.data?.attributes?.full_name);
+
     const entitledTierIds = (identity.included || [])
       .filter(item => item.type === 'tier')
       .map(item => item.id);
